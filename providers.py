@@ -20,12 +20,13 @@ class ProviderError(RuntimeError):
     pass
 
 
-def _post(url: str, key: str, body: dict, timeout: int = 180, retries: int = 4) -> requests.Response:
+def _post(url: str, key: str, body: dict, timeout: int = 180, retries: int = 6) -> requests.Response:
     headers = {"Content-Type": "application/json"}
     if key:
         headers["Authorization"] = f"Bearer {key}"
     last_error = None
     for attempt in range(retries):
+        wait = 2 * 2 ** attempt  # 2s, 4s, 8s ...
         try:
             resp = requests.post(url, json=body, headers=headers, timeout=timeout)
         except requests.RequestException as exc:
@@ -36,7 +37,9 @@ def _post(url: str, key: str, body: dict, timeout: int = 180, retries: int = 4) 
             if resp.status_code not in (408, 429, 500, 502, 503, 504):
                 raise ProviderError(f"{url} returned {resp.status_code}: {resp.text[:500]}")
             last_error = ProviderError(f"{resp.status_code}: {resp.text[:300]}")
-        time.sleep(2 * 2 ** attempt)  # 2s, 4s, 8s ... backs off politely on rate limits
+            if resp.status_code == 429:  # Bodhan's quota is per minute (~8 TTS calls), so wait out the window
+                wait = max(wait, float(resp.headers.get("Retry-After") or 20))
+        time.sleep(wait)
     raise ProviderError(f"{url} failed after {retries} attempts: {last_error}")
 
 

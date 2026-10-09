@@ -42,3 +42,20 @@ def test_llm_reasoning_flag_and_empty_replies(monkeypatch):
     llm, _ = _llm_reply(monkeypatch, {"message": {"content": None}, "finish_reason": "length"})
     with pytest.raises(providers.ProviderError, match="tokens"):
         llm.complete("s", "u")
+
+
+def test_post_waits_out_rate_limits(monkeypatch):
+    class Resp:
+        def __init__(self, status, headers=None):
+            self.status_code, self.headers, self.text = status, headers or {}, "x"
+
+    replies = iter([Resp(429, {"Retry-After": "7"}), Resp(429), Resp(503), Resp(200)])
+    sleeps = []
+    monkeypatch.setattr(providers.requests, "post", lambda *a, **k: next(replies))
+    monkeypatch.setattr(providers.time, "sleep", sleeps.append)
+    assert providers._post("u", "k", {}).status_code == 200
+    assert sleeps == [7.0, 20.0, 8]
+
+    monkeypatch.setattr(providers.requests, "post", lambda *a, **k: Resp(401))
+    with pytest.raises(providers.ProviderError, match="401"):
+        providers._post("u", "k", {})
