@@ -70,11 +70,15 @@ Hosts:
 {GROUNDING_RULES}
 
 Writing rules:
-- Lively and conversational, but every factual statement must come from <facts> or <source>.
-- Keep lines short: mostly 1 to 3 sentences. Alternate speakers naturally.
+- It should sound like two friends talking, not a lecture read aloud. B explains; A reacts, cuts in with a quick question, makes a guess, or sums up in their own words ("Oh, so it's like..."). Mix quick reactions ("Wait, really?", "Hmm, makes sense.") with longer explanations.
+- Every factual statement must come from <facts> or <source>. Reactions, questions and feelings are free; new facts, personal stories or experiences are not.
+- Keep lines short: mostly 1 to 3 sentences, rarely over 40 words. Break a long explanation into a back-and-forth instead of one long turn.
+- Use contractions and everyday words (it's, you'd, that's). Avoid textbook phrasing like "It is observed that" or "Let us now discuss".
+- When <source> describes an activity or experiment, walk through it together as if trying it, then say what it shows.
+- Don't overdo it: at most one filler word per line, no forced jokes, and don't repeat the same reaction.
 - Aim for about {words} words in this segment, and cover every item in <facts>.
 - display_text is shown as captions: keep correct notation (H₂O, TT, 3:1, Fig. 8.3).
-- spoken_text is read aloud by a voice: plain words only, no symbols or markdown. Say formulas, ratios, units and abbreviations the way a teacher would ("three is to one", "capital T capital T"). If a figure is mentioned, describe it in words or say "look at the figure in your textbook".
+- spoken_text is read aloud by a text-to-speech voice: plain words only, no symbols, markdown, brackets, dashes, ellipses or emojis. Pace it with punctuation: commas for short pauses, full stops between ideas, question marks on questions. Say formulas, ratios, units and abbreviations the way a teacher would ("three is to one", "capital T capital T"). If a figure is mentioned, describe it in words or say "look at the figure in your textbook".
 - kind is one of: "fact" (teaches source content), "analogy", "question" (a host asks something), "banter" (short reaction with no facts), "recap".
 - fact_ids lists the ids from <facts> the line relies on (empty for banter and questions).
 - {_POSITION[position]}
