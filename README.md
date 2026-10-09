@@ -32,9 +32,10 @@ python run.py render   --script out/ch8/script.json --out out/ch8        # then 
 
 Or all at once: `python run.py generate --input chapter.txt --out out/ch8 --minutes 10`.
 
-## What to verify against the Bodhan console docs
+## Providers
 
-Everything provider-specific is in `providers.py`, marked `VERIFY`: the speech endpoint path, the exact model id, the name of the required language field, and the voice ids. The LLM client works with any OpenAI-compatible chat endpoint.
+- **TTS:** Bodhan Indic-Speak, `POST https://api.bodhan.ai/v1/audio/speech` with model `indic-speak`, a required `voice` (e.g. `Kavya`, `Arun`; any voice reads any language) and the language in `instructions` as a JSON string (`{"lang": "en"}`). Returns WAV. Needs a Bodhan key from the Bodhan dashboard.
+- **LLM:** any OpenAI-compatible chat endpoint (we use OpenRouter). Bodhan has no general chat model, so the script writer can't be a Bodhan model.
 
 ## Files
 

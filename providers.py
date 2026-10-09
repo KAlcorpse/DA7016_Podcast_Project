@@ -4,10 +4,10 @@
     tts.synthesize(text, voice=..., language=...) -> bytes  (any audio ffmpeg can read)
 
 Bodhan's hosted APIs use OpenAI-compatible request shapes, so both clients follow
-the OpenAI format. Lines marked VERIFY are the ones to check against the API docs
-in the Bodhan console (exact model name, the language field, voice ids).
+the OpenAI format. The TTS request matches the Bodhan API reference (Text to Speech).
 """
 import io
+import json
 import math
 import struct
 import time
@@ -65,24 +65,24 @@ class OpenAICompatibleLLM:
 
 
 class BodhanTTS:
-    """Bodhan Indic-Speak via the OpenAI-style /audio/speech endpoint."""
+    """Bodhan Indic-Speak: POST /v1/audio/speech, returns WAV (PCM16, 24 kHz, mono).
+    voice is required (any voice reads any language, e.g. Kavya, Arun), and the language
+    goes in `instructions` as a JSON string: '{"lang": "en"}'."""
 
     def __init__(self, base_url: str, api_key: str, model: str):
         if not api_key:
             raise ProviderError("Set BODHAN_TTS_KEY in .env (Bodhan issues a separate key per model)")
-        self.url = f"{base_url}/audio/speech"  # VERIFY: path in the console docs
+        self.url = f"{base_url}/audio/speech"
         self.key = api_key
         self.model = model
 
     def synthesize(self, text: str, voice: str, language: str) -> bytes:
         body = {
-            "model": self.model,           # VERIFY: exact model id
+            "model": self.model,
             "input": text,
-            "language": language,          # VERIFY: field name; Bodhan requires a language setting
-            "response_format": "wav",
+            "voice": voice,
+            "instructions": json.dumps({"lang": language}),
         }
-        if voice:
-            body["voice"] = voice          # VERIFY: voice ids from the console's voice list
         resp = _post(self.url, self.key, body)
         if resp.headers.get("Content-Type", "").startswith("application/json"):
             raise ProviderError(f"Expected audio but got JSON: {resp.text[:300]}")
@@ -120,7 +120,9 @@ def build_tts(settings, mock: bool = False):
     """Returns (tts_client, voices) where voices maps speaker 'A'/'B' to a voice id."""
     if mock:
         return MockTTS(), {"A": "mock-A", "B": "mock-B"}
-    if settings.voice_a and settings.voice_a == settings.voice_b:
+    if not (settings.voice_a and settings.voice_b):
+        raise ProviderError("Set BODHAN_VOICE_A and BODHAN_VOICE_B in .env (e.g. Kavya and Arun)")
+    if settings.voice_a == settings.voice_b:
         print("Warning: BODHAN_VOICE_A and BODHAN_VOICE_B are the same; the hosts will sound identical.")
     tts = BodhanTTS(settings.tts_base_url, settings.tts_api_key, settings.tts_model)
     return tts, {"A": settings.voice_a, "B": settings.voice_b}
