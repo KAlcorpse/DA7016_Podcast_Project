@@ -29,7 +29,10 @@ class RenderError(RuntimeError):
 
 
 def _ffmpeg(*args: str) -> None:
-    result = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *args], capture_output=True, text=True)
+    try:
+        result = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *args], capture_output=True, text=True)
+    except FileNotFoundError:
+        raise RenderError("ffmpeg is not installed (sudo apt install ffmpeg)") from None
     if result.returncode != 0:
         raise RenderError(f"ffmpeg failed: {result.stderr[-800:]}")
 
