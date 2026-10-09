@@ -1,6 +1,6 @@
 import pytest
 
-from script_builder import ScriptError, _apply_edit, _apply_fixes, _normalise_plan, parse_json
+from script_builder import ScriptError, _apply_edit, _apply_fixes, _normalise_lines, _normalise_plan, parse_json
 
 
 # --- parse_json ---------------------------------------------------------------
@@ -96,3 +96,18 @@ def test_apply_edit_keeps_the_draft_when_facts_would_be_lost():
     assert [(l["id"], l["display_text"], l["fact_ids"]) for l in segments[0]["lines"]] == [("s1-l1", "Both.", ["8.1-f1", "8.1-f2"])]
     assert segments[1:] == draft()[1:]
     assert len(logs) == 2
+
+
+def test_normalise_lines_merges_one_host_talking_twice():
+    lines = _normalise_lines([
+        {"speaker": "A", "display_text": "Hi!", "kind": "banter"},
+        {"speaker": "Arjun", "display_text": "Sound is vibration.", "kind": "question", "fact_ids": ["8.1-f1"]},
+        {"speaker": "B", "display_text": "H₂O carries it.", "spoken_text": "H two O carries it.", "kind": "fact",
+         "fact_ids": ["8.1-f1", "8.1-f2", "bogus"]},
+        "junk", {"speaker": "A", "display_text": ""},
+    ], "s1", FACTS, "Arjun")
+    assert lines == [
+        {"id": "s1-l1", "speaker": "A", "display_text": "Hi!", "spoken_text": "Hi!", "kind": "banter", "fact_ids": []},
+        {"id": "s1-l2", "speaker": "B", "display_text": "Sound is vibration. H₂O carries it.",
+         "spoken_text": "Sound is vibration. H two O carries it.", "kind": "fact", "fact_ids": ["8.1-f1", "8.1-f2"]},
+    ]

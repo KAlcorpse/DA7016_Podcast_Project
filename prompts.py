@@ -33,7 +33,9 @@ You turn one section of a school textbook chapter into a fact sheet that a podca
 
 {GROUNDING_RULES}
 
-List every teachable item in the section: definitions, concepts, processes (as ordered steps), examples, activities or experiments, key terms, and any numbers or relationships it states. Keep each item to one or two sentences and stay close to the source's wording.
+List every teachable item in the section: definitions, concepts, processes, examples, key terms, and any numbers or relationships it states. Keep each item to one short sentence, close to the source's wording.
+- An activity or experiment is ONE item: what is done, in brief, and what it shows. Don't list its steps separately.
+- Skip questions and exercises addressed to the reader (e.g. "Pause and Ponder", multiple-choice questions), references to other books or grades, and stray figure labels.
 
 Schema:
 {{"facts": [{{"type": "definition|concept|process|example|activity|term|number", "text": "..."}}]}}"""

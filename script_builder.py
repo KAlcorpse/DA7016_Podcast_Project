@@ -100,13 +100,22 @@ def _normalise_lines(raw_lines, seg_id: str, fact_index: dict, host_b: str) -> l
         who = str(raw.get("speaker") or "A").strip().upper()
         speaker = "B" if who in ("B", host_b.upper()) else "A"
         kind = str(raw.get("kind") or "fact").strip().lower()
+        fact_ids = [f for f in raw.get("fact_ids") or [] if f in fact_index]
+        if lines and lines[-1]["speaker"] == speaker:  # one host twice in a row is one turn
+            prev = lines[-1]
+            prev["display_text"] += " " + (display or spoken)
+            prev["spoken_text"] += " " + spoken
+            prev["fact_ids"] += [f for f in fact_ids if f not in prev["fact_ids"]]
+            if kind == "fact":
+                prev["kind"] = "fact"
+            continue
         lines.append({
             "id": f"{seg_id}-l{len(lines) + 1}",
             "speaker": speaker,
             "display_text": display or spoken,
             "spoken_text": spoken,
             "kind": kind if kind in KINDS else "fact",
-            "fact_ids": [f for f in raw.get("fact_ids") or [] if f in fact_index],
+            "fact_ids": fact_ids,
         })
     if not lines:
         raise ScriptError(f"Segment {seg_id} came back empty")
@@ -229,7 +238,7 @@ def build_script(sections, llm, *, minutes, audience, language, host_a, host_b, 
     before = _word_count(segments)
     s, u = prompts.edit(facts=facts, segments=segments, current_words=before, target_words=total_words,
                         audience=audience, host_a=host_a, host_b=host_b)
-    edited = ask_json(llm, s, u, "segments", temperature=0.3, max_tokens=12000)["segments"]
+    edited = ask_json(llm, s, u, "segments", temperature=0.3, max_tokens=16000, reasoning=True)["segments"]
     _apply_edit(segments, edited, fact_index, host_b, log)
     log(f"  Edited for flow and length: {before} -> {_word_count(segments)} words")
 

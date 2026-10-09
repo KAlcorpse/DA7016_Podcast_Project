@@ -59,7 +59,7 @@ class OpenAICompatibleLLM:
             "max_tokens": max_tokens,
         }
         # Thinking models reason by default; at full effort DeepSeek once spent 16k tokens on one
-        # verify call. So: no reasoning for writing, low effort for verify.
+        # verify call. So: no reasoning for writing, low effort for edit and verify.
         # ponytail: OpenRouter's field; other hosts keep their default.
         if "openrouter.ai" in self.url:
             body["reasoning"] = {"effort": "low"} if reasoning else {"enabled": False}

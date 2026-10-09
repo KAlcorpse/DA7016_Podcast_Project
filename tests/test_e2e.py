@@ -112,7 +112,7 @@ def test_script_is_grounded_verified_and_fixed():
 
     # Verify ran on every segment (plus a re-check after the fix), with reasoning on.
     assert len(llm.stage_calls("verify")) == len(script["segments"]) + 1
-    assert llm.reasoned == {"verify"}
+    assert llm.reasoned == {"edit", "verify"}  # the judgement stages think first
     assert len(llm.stage_calls("fix")) == 1
 
     assert [s["section_ids"] for s in script["segments"]] == [["8.1"], ["8.2"]]
