@@ -1,0 +1,44 @@
+{
+  "title": "Why do pea plants keep secrets?",
+  "language": "English",
+  "audience": "Class 10 students",
+  "hosts": {"A": "Meera", "B": "Arjun"},
+  "segments": [
+    {
+      "id": "s1", "title": "Mendel's pea plants", "goal": "", "section_ids": [], "fact_ids": [],
+      "lines": [
+        {"id": "s1-l1", "speaker": "A", "kind": "banter", "fact_ids": [],
+         "display_text": "Hi everyone, welcome back! I'm Meera.",
+         "spoken_text": "Hi everyone, welcome back! I'm Meera."},
+        {"id": "s1-l2", "speaker": "B", "kind": "banter", "fact_ids": [],
+         "display_text": "And I'm Arjun. Today we're asking why children look like their parents, but never exactly.",
+         "spoken_text": "And I'm Arjun. Today we're asking why children look like their parents, but never exactly."},
+        {"id": "s1-l3", "speaker": "A", "kind": "question", "fact_ids": [],
+         "display_text": "So where does this story start?",
+         "spoken_text": "So where does this story start?"},
+        {"id": "s1-l4", "speaker": "B", "kind": "fact", "fact_ids": [],
+         "display_text": "With Mendel and garden pea plants. Peas show clear contrasting traits, like tall plants and short plants. When he crossed a tall plant with a short one, every plant in the first generation, the F1, was tall. None were halfway in between.",
+         "spoken_text": "With Mendel and garden pea plants. Peas show clear contrasting traits, like tall plants and short plants. When he crossed a tall plant with a short one, every plant in the first generation, called F one, was tall. None were halfway in between."}
+      ]
+    },
+    {
+      "id": "s2", "title": "The 3:1 surprise", "goal": "", "section_ids": [], "fact_ids": [],
+      "lines": [
+        {"id": "s2-l1", "speaker": "A", "kind": "question", "fact_ids": [],
+         "display_text": "Wait, so the short trait just vanished?",
+         "spoken_text": "Wait, so the short trait just vanished?"},
+        {"id": "s2-l2", "speaker": "B", "kind": "fact", "fact_ids": [],
+         "display_text": "Not quite! When the F1 plants self-pollinated, the F2 generation had tall and short plants in a ratio of about 3:1.",
+         "spoken_text": "Not quite! When the F one plants self-pollinated, the F two generation had tall and short plants in a ratio of about three is to one."},
+        {"id": "s2-l3", "speaker": "B", "kind": "fact", "fact_ids": [],
+         "display_text": "A plant with TT or Tt is tall. Only tt gives a short plant.",
+         "spoken_text": "A plant with capital T capital T, or capital T small t, is tall. Only small t small t gives a short plant."},
+        {"id": "s2-l4", "speaker": "A", "kind": "recap", "fact_ids": [],
+         "display_text": "So the short trait was hiding, not gone. That's it for today, see you next time!",
+         "spoken_text": "So the short trait was hiding, not gone. That's it for today, see you next time!"}
+      ]
+    }
+  ],
+  "facts": [],
+  "unresolved_issues": []
+}
