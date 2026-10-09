@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 import providers
 
 
@@ -20,3 +22,23 @@ def test_bodhan_request_matches_api_reference(monkeypatch):
     assert sent["url"] == "https://api.bodhan.ai/v1/audio/speech"
     assert sent["body"] == {"model": "indic-speak", "input": "Hello.", "voice": "Kavya", "instructions": '{"lang": "en"}'}
     assert json.loads(sent["body"]["instructions"]) == {"lang": "en"}
+
+
+def _llm_reply(monkeypatch, choice):
+    class Resp:
+        def json(self):
+            return {"choices": [choice]}
+
+    sent = {}
+    monkeypatch.setattr(providers, "_post", lambda url, key, body: sent.update(body) or Resp())
+    return providers.OpenAICompatibleLLM("https://openrouter.ai/api/v1", "k", "m"), sent
+
+
+def test_llm_reasoning_flag_and_empty_replies(monkeypatch):
+    llm, sent = _llm_reply(monkeypatch, {"message": {"content": None}, "finish_reason": "stop"})
+    assert llm.complete("s", "u", reasoning=True) == ""  # empty reply -> ask_json retries
+    assert sent["reasoning"] == {"enabled": True}
+
+    llm, _ = _llm_reply(monkeypatch, {"message": {"content": None}, "finish_reason": "length"})
+    with pytest.raises(providers.ProviderError, match="tokens"):
+        llm.complete("s", "u")

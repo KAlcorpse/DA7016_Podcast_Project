@@ -26,11 +26,12 @@ def parse_json(text: str) -> dict:
     return json.loads(cleaned[start:end + 1])
 
 
-def ask_json(llm, system: str, user: str, key: str, temperature: float = 0.3, max_tokens: int = 4000) -> dict:
+def ask_json(llm, system: str, user: str, key: str, temperature: float = 0.3, max_tokens: int = 4000,
+             reasoning: bool = False) -> dict:
     """Calls the LLM and insists on a JSON object containing `key` (retries twice)."""
     prompt = user
     for _ in range(3):
-        reply = llm.complete(system, prompt, temperature=temperature, max_tokens=max_tokens)
+        reply = llm.complete(system, prompt, temperature=temperature, max_tokens=max_tokens, reasoning=reasoning)
         try:
             data = parse_json(reply)
             if isinstance(data, dict) and isinstance(data.get(key), list):
@@ -129,7 +130,7 @@ def _verify_and_fix(llm, seg: dict, source: str, log) -> list:
     issues = []
     for round_no in range(MAX_FIX_ROUNDS + 1):
         s, u = prompts.verify(source, seg["lines"])
-        data = ask_json(llm, s, u, "issues", temperature=0.0)
+        data = ask_json(llm, s, u, "issues", temperature=0.0, max_tokens=16000, reasoning=True)  # think before judging
         by_id = {line["id"]: line for line in seg["lines"]}
         issues = [i for i in data["issues"] if isinstance(i, dict) and i.get("line_id") in by_id]
         if not issues:

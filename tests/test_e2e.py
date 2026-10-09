@@ -34,10 +34,13 @@ class FakeLLM:
     def __init__(self, stubborn: bool = False):
         self.stubborn = stubborn
         self.calls = []  # (stage, system, user)
+        self.reasoned = set()  # stages that asked the model to think first
 
-    def complete(self, system, user, temperature=0.3, max_tokens=4000):
+    def complete(self, system, user, temperature=0.3, max_tokens=4000, reasoning=False):
         stage = system.splitlines()[0].removeprefix("STAGE: ")
         self.calls.append((stage, system, user))
+        if reasoning:
+            self.reasoned.add(stage)
         return getattr(self, stage)(user)
 
     def stage_calls(self, stage):
@@ -92,8 +95,9 @@ def test_script_is_grounded_verified_and_fixed():
     sections = prepare_sections(CHAPTER)
     assert [_between(u, "source").strip() for _, _, u in llm.stage_calls("extract")] == [s["text"] for s in sections]
 
-    # Verify ran on every segment (plus a re-check after the fix).
+    # Verify ran on every segment (plus a re-check after the fix), with reasoning on.
     assert len(llm.stage_calls("verify")) == len(script["segments"]) + 1
+    assert llm.reasoned == {"verify"}
     assert len(llm.stage_calls("fix")) == 1
 
     assert [s["section_ids"] for s in script["segments"]] == [["8.1"], ["8.2"]]

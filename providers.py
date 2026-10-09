@@ -1,6 +1,6 @@
 """Provider layer. The rest of the pipeline only uses two methods:
 
-    llm.complete(system, user, temperature=..., max_tokens=...) -> str
+    llm.complete(system, user, temperature=..., max_tokens=..., reasoning=...) -> str
     tts.synthesize(text, voice=..., language=...) -> bytes  (any audio ffmpeg can read)
 
 Bodhan's hosted APIs use OpenAI-compatible request shapes, so both clients follow
@@ -50,18 +50,27 @@ class OpenAICompatibleLLM:
         self.key = api_key
         self.model = model
 
-    def complete(self, system: str, user: str, temperature: float = 0.3, max_tokens: int = 4000) -> str:
+    def complete(self, system: str, user: str, temperature: float = 0.3, max_tokens: int = 4000,
+                 reasoning: bool = False) -> str:
         body = {
             "model": self.model,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
+        # Thinking models reason by default, which is slow and eats max_tokens. Only the
+        # verify stage asks for it. ponytail: OpenRouter's field; other hosts keep their default.
+        if "openrouter.ai" in self.url:
+            body["reasoning"] = {"enabled": reasoning}
         data = _post(self.url, self.key, body).json()
         try:
-            return data["choices"][0]["message"]["content"]
-        except (KeyError, IndexError, TypeError) as exc:
+            choice = data["choices"][0]
+            content = choice["message"].get("content")
+        except (KeyError, IndexError, TypeError, AttributeError) as exc:
             raise ProviderError(f"Unexpected LLM response shape: {str(data)[:300]}") from exc
+        if not content and choice.get("finish_reason") == "length":
+            raise ProviderError(f"The LLM used all {max_tokens} tokens without answering")
+        return content or ""  # an occasional empty reply is retried by ask_json
 
 
 class BodhanTTS:
