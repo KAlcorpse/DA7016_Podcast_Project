@@ -58,10 +58,11 @@ class OpenAICompatibleLLM:
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
-        # Thinking models reason by default, which is slow and eats max_tokens. Only the
-        # verify stage asks for it. ponytail: OpenRouter's field; other hosts keep their default.
+        # Thinking models reason by default; at full effort DeepSeek once spent 16k tokens on one
+        # verify call. So: no reasoning for writing, low effort for verify.
+        # ponytail: OpenRouter's field; other hosts keep their default.
         if "openrouter.ai" in self.url:
-            body["reasoning"] = {"enabled": reasoning}
+            body["reasoning"] = {"effort": "low"} if reasoning else {"enabled": False}
         data = _post(self.url, self.key, body).json()
         try:
             choice = data["choices"][0]

@@ -37,7 +37,7 @@ def _llm_reply(monkeypatch, choice):
 def test_llm_reasoning_flag_and_empty_replies(monkeypatch):
     llm, sent = _llm_reply(monkeypatch, {"message": {"content": None}, "finish_reason": "stop"})
     assert llm.complete("s", "u", reasoning=True) == ""  # empty reply -> ask_json retries
-    assert sent["reasoning"] == {"enabled": True}
+    assert sent["reasoning"] == {"effort": "low"}
 
     llm, _ = _llm_reply(monkeypatch, {"message": {"content": None}, "finish_reason": "length"})
     with pytest.raises(providers.ProviderError, match="tokens"):
