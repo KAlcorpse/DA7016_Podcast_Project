@@ -132,24 +132,23 @@ def _apply_fixes(seg: dict, fixes: list) -> None:
         raise ScriptError(f"All lines in segment {seg['id']} were deleted during fixing")
 
 
-def _apply_edits(segments: list, edits: list, fact_index: dict) -> None:
-    """Applies the editor's rewrites and deletes through _apply_fixes, but skips any delete
-    that would drop a fact or empty a segment: tightening must never cut teaching content."""
-    edits = [e for e in edits if isinstance(e, dict)]
-    lines = {line["id"]: line for seg in segments for line in seg["lines"]}
-    for e in edits:  # a merged line takes over the facts of the line it absorbed
-        if e.get("action") != "delete" and e.get("line_id") in lines:
-            line = lines[e["line_id"]]
-            line["fact_ids"] += [f for f in e.get("fact_ids") or [] if f in fact_index and f not in line["fact_ids"]]
-    deleted = {e.get("line_id") for e in edits if e.get("action") == "delete"}
-    kept = {f for lid, line in lines.items() if lid not in deleted for f in line["fact_ids"]}
+def _taught(lines) -> set:
+    return {f for line in lines for f in line["fact_ids"]}
+
+
+def _apply_edit(segments: list, edited: list, fact_index: dict, host_b: str, log) -> None:
+    """Swaps in the editor's version of each segment, unless it is missing or drops a fact
+    the draft taught: tightening must never cut teaching content."""
+    by_id = {e.get("id"): e for e in edited if isinstance(e, dict)}
     for seg in segments:
-        ids = {line["id"] for line in seg["lines"]}
-        mine = [e for e in edits if e.get("line_id") in ids
-                and (e.get("action") != "delete" or set(lines[e["line_id"]]["fact_ids"]) <= kept)]
-        if {e["line_id"] for e in mine if e.get("action") == "delete"} >= ids:
-            mine = [e for e in mine if e.get("action") != "delete"]
-        _apply_fixes(seg, mine)
+        try:
+            lines = _normalise_lines(by_id[seg["id"]].get("lines") or [], seg["id"], fact_index, host_b)
+        except (KeyError, ScriptError):
+            lines = []
+        if lines and _taught(seg["lines"]) <= _taught(lines):
+            seg["lines"] = lines
+        else:
+            log(f"    {seg['id']}: kept the draft (edit missing or dropped facts)")
 
 
 def _verify_and_fix(llm, seg: dict, source: str, log) -> list:
@@ -226,11 +225,12 @@ def build_script(sections, llm, *, minutes, audience, language, host_a, host_b, 
         seg["lines"] = _normalise_lines(raw, seg["id"], fact_index, host_b)
         previous = seg["lines"][-4:]
 
-    # 4. Edit the whole episode for flow and length (rewrite/delete only, facts kept).
+    # 4. Edit the whole episode for flow and length; a segment that loses facts keeps its draft.
     before = _word_count(segments)
     s, u = prompts.edit(facts=facts, segments=segments, current_words=before, target_words=total_words,
                         audience=audience, host_a=host_a, host_b=host_b)
-    _apply_edits(segments, ask_json(llm, s, u, "edits", temperature=0.2, max_tokens=12000)["edits"], fact_index)
+    edited = ask_json(llm, s, u, "segments", temperature=0.3, max_tokens=12000)["segments"]
+    _apply_edit(segments, edited, fact_index, host_b, log)
     log(f"  Edited for flow and length: {before} -> {_word_count(segments)} words")
 
     # 5. Verify and fix each segment against its own source text.

@@ -1,6 +1,6 @@
 import pytest
 
-from script_builder import ScriptError, _apply_edits, _apply_fixes, _normalise_plan, parse_json
+from script_builder import ScriptError, _apply_edit, _apply_fixes, _normalise_plan, parse_json
 
 
 # --- parse_json ---------------------------------------------------------------
@@ -76,23 +76,23 @@ def test_apply_fixes_deleting_everything_fails():
 
 # --- editor changes -----------------------------------------------------------
 
-def test_apply_edits_never_drops_facts_or_empties_a_segment():
+def test_apply_edit_keeps_the_draft_when_facts_would_be_lost():
     def line(lid, facts):
-        return {"id": lid, "display_text": lid, "spoken_text": lid, "fact_ids": facts}
-    segments = [
-        {"id": "s1", "lines": [line("s1-l1", []), line("s1-l2", ["8.1-f1"]), line("s1-l3", ["8.1-f2"])]},
-        {"id": "s2", "lines": [line("s2-l1", []), line("s2-l2", [])]},
-    ]
-    _apply_edits(segments, [
-        {"line_id": "s1-l1", "action": "delete"},                                            # allowed
-        {"line_id": "s1-l2", "action": "rewrite", "display_text": "merged", "fact_ids": ["8.1-f2", "bogus"]},
-        {"line_id": "s1-l3", "action": "delete"},                                            # facts now on s1-l2
-        "junk",
-        {"line_id": "s2-l1", "action": "delete"}, {"line_id": "s2-l2", "action": "delete"},  # would empty s2
-    ], FACTS)
-    assert [(l["id"], l["display_text"], l["fact_ids"]) for l in segments[0]["lines"]] == [("s1-l2", "merged", ["8.1-f1", "8.1-f2"])]
-    assert [l["id"] for l in segments[1]["lines"]] == ["s2-l1", "s2-l2"]
+        return {"id": lid, "speaker": "A", "kind": "fact", "display_text": lid, "spoken_text": lid, "fact_ids": facts}
 
-    segments = [{"id": "s1", "lines": [line("s1-l1", ["8.1-f1"]), line("s1-l2", [])]}]
-    _apply_edits(segments, [{"line_id": "s1-l1", "action": "delete"}], FACTS)  # only line teaching 8.1-f1
-    assert [l["id"] for l in segments[0]["lines"]] == ["s1-l1", "s1-l2"]
+    def draft():
+        return [
+            {"id": "s1", "lines": [line("s1-l1", []), line("s1-l2", ["8.1-f1"]), line("s1-l3", ["8.1-f2"])]},
+            {"id": "s2", "lines": [line("s2-l1", ["8.2-f1"])]},
+            {"id": "s3", "lines": [line("s3-l1", ["8.3-f1"])]},
+        ]
+
+    segments, logs = draft(), []
+    _apply_edit(segments, [
+        {"id": "s1", "lines": [{"speaker": "B", "display_text": "Both.", "fact_ids": ["8.1-f1", "8.1-f2", "bogus"]}]},
+        {"id": "s2", "lines": [{"speaker": "B", "display_text": "Nothing taught.", "fact_ids": []}]},
+        "junk",  # and s3 is missing entirely
+    ], FACTS, "Arjun", logs.append)
+    assert [(l["id"], l["display_text"], l["fact_ids"]) for l in segments[0]["lines"]] == [("s1-l1", "Both.", ["8.1-f1", "8.1-f2"])]
+    assert segments[1:] == draft()[1:]
+    assert len(logs) == 2

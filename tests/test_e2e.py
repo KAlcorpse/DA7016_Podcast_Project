@@ -68,12 +68,11 @@ class FakeLLM:
         return json.dumps({"lines": lines})
 
     def edit(self, user):
-        return json.dumps({"edits": [
-            {"line_id": "s1-l1", "action": "delete"},                       # fact-free question: allowed
-            {"line_id": "s1-l2", "action": "delete"},                       # only line teaching 8.1-f1: refused
-            {"line_id": "s2-l2", "action": "rewrite", "display_text": "Both facts.", "spoken_text": "Both facts.",
-             "fact_ids": ["8.2-f2"]},                                       # merge s2-l3 into s2-l2
-            {"line_id": "s2-l3", "action": "delete"},
+        def line(speaker, text, fid):
+            return {"speaker": speaker, "display_text": text, "spoken_text": text, "kind": "fact", "fact_ids": [fid]}
+        return json.dumps({"segments": [
+            {"id": "s1", "lines": [line("B", "Tight 8.1-f1.", "8.1-f1"), line("Meera", "Tight 8.1-f2.", "8.1-f2")]},
+            {"id": "s2", "lines": [line("B", "Only 8.2-f1.", "8.2-f1")]},  # drops 8.2-f2: draft must be kept
         ]})
 
     def verify(self, user):
@@ -108,8 +107,8 @@ def test_script_is_grounded_verified_and_fixed():
     stages = [c[0] for c in llm.calls]
     assert stages.count("edit") == 1 and stages.index("edit") < stages.index("verify")
     s1, s2 = (seg["lines"] for seg in script["segments"])
-    assert [line["id"] for line in s1] == ["s1-l2", "s1-l3"]
-    assert [(line["id"], line["fact_ids"]) for line in s2] == [("s2-l1", []), ("s2-l2", ["8.2-f1", "8.2-f2"])]
+    assert [line["display_text"] for line in s1] == ["Tight 8.1-f1.", "Fixed line."]  # edited, then fixed
+    assert [line["id"] for line in s2] == ["s2-l1", "s2-l2", "s2-l3"]                # draft kept
 
     # Verify ran on every segment (plus a re-check after the fix), with reasoning on.
     assert len(llm.stage_calls("verify")) == len(script["segments"]) + 1
