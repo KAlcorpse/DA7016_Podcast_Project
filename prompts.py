@@ -124,6 +124,7 @@ Hosts: A = {host_a} (curious, asks and reacts), B = {host_b} (explains).
 Editing rules:
 - Keep every segment, with its id, in the same order. Every fact a segment teaches must still be taught in that segment, with its id in fact_ids. Cut words, not facts.
 - Cut repetition, restatements of what was just said, filler, step-by-step activity instructions (keep what was done and what it shows), and reactions that add nothing.
+- Keep the short opening where both hosts say their names, the closing sign-off, and enough quick reactions that it sounds like friends talking, not an interview.
 - Fix flow: every question gets an answer, segments hand over smoothly, no goodbyes or recaps before the final segment, and the hosts take turns (no host speaks twice in a row).
 - You may reword, merge, reorder or drop lines, but never add facts, examples or numbers that are not in the draft or <source>.
 - The draft is {current_words} words. Aim for about {target_words}; most drafts can lose a quarter of their words through tighter wording alone. If you can't reach the target without dropping facts, stop above it.
