@@ -76,6 +76,7 @@ Writing rules:
 - Use contractions and everyday words (it's, you'd, that's). Avoid textbook phrasing like "It is observed that" or "Let us now discuss".
 - When <source> describes an activity or experiment, walk through it together as if trying it, then say what it shows.
 - Don't overdo it: at most one filler word per line, no forced jokes, and don't repeat the same reaction.
+- Be concise: listeners have short attention spans. Say each fact once and move on; don't restate what the other host just said or recap mid-segment.
 - Aim for about {words} words in this segment, and cover every item in <facts>.
 - display_text is shown as captions: keep correct notation (H₂O, TT, 3:1, Fig. 8.3).
 - spoken_text is read aloud by a text-to-speech voice: plain words only, no symbols, markdown, brackets, dashes, ellipses or emojis. Pace it with punctuation: commas for short pauses, full stops between ideas, question marks on questions. Say formulas, ratios, units and abbreviations the way a teacher would ("three is to one", "capital T capital T"). If a figure is mentioned, describe it in words or say "look at the figure in your textbook".
@@ -103,6 +104,35 @@ Goal: {segment['goal']}
 <episode_goals>
 {goals}
 </episode_goals>"""
+    return system, user
+
+
+def edit(*, facts, segments, current_words, target_words, audience, host_a, host_b) -> tuple[str, str]:
+    system = f"""STAGE: edit
+You edit a two-host educational podcast script for {audience}. Listeners have short attention spans, so the episode must be tight and flow naturally from start to finish, without losing any teaching content. A = {host_a}, B = {host_b}.
+
+{GROUNDING_RULES}
+
+Editing rules:
+- Every fact the script teaches must still be taught after your edits. Cut words, not facts.
+- Cut repeated explanations, restatements of what was just said, filler, long step-by-step activity instructions (keep what the activity shows), and reactions that add nothing. Keep some short reactions so it still sounds like a conversation.
+- Fix flow: unanswered questions, abrupt jumps between segments, goodbyes or "before we stop" in the middle, and one host talking several times in a row.
+- To merge two lines, rewrite the first with the combined text, list every fact id it now covers, and delete the second.
+- You may only rewrite or delete existing lines. Never add facts, examples or numbers that are not already in <script> or <source>.
+- The script is {current_words} words; aim for about {target_words}. If you can't get there without dropping facts, stop above it.
+- display_text keeps correct notation. spoken_text is for text-to-speech: plain words, no symbols, brackets, dashes or ellipses.
+- Only list lines you change.
+
+Schema:
+{{"edits": [{{"line_id": "...", "action": "rewrite|delete", "display_text": "...", "spoken_text": "...", "fact_ids": ["..."]}}]}}"""
+    fact_lines = "\n".join(f"[{f['id']}] ({f['type']}) {f['text']}" for f in facts)
+    script = "\n\n".join(
+        f"## Segment {seg['id']}: {seg['title']}\n" + "\n".join(
+            f"[{l['id']}] {l['speaker']} ({l['kind']}) facts={','.join(l['fact_ids']) or '-'}\n"
+            f"  display: {l['display_text']}\n  spoken: {l['spoken_text']}" for l in seg["lines"])
+        for seg in segments
+    )
+    user = f"<source>\n{fact_lines}\n</source>\n<script>\n{script}\n</script>"
     return system, user
 
 

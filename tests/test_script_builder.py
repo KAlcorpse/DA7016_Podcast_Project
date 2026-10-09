@@ -1,6 +1,6 @@
 import pytest
 
-from script_builder import ScriptError, _apply_fixes, _normalise_plan, parse_json
+from script_builder import ScriptError, _apply_edits, _apply_fixes, _normalise_plan, parse_json
 
 
 # --- parse_json ---------------------------------------------------------------
@@ -72,3 +72,27 @@ def test_apply_fixes_deleting_everything_fails():
     seg = _seg()
     with pytest.raises(ScriptError):
         _apply_fixes(seg, [{"line_id": line["id"], "action": "delete"} for line in seg["lines"]])
+
+
+# --- editor changes -----------------------------------------------------------
+
+def test_apply_edits_never_drops_facts_or_empties_a_segment():
+    def line(lid, facts):
+        return {"id": lid, "display_text": lid, "spoken_text": lid, "fact_ids": facts}
+    segments = [
+        {"id": "s1", "lines": [line("s1-l1", []), line("s1-l2", ["8.1-f1"]), line("s1-l3", ["8.1-f2"])]},
+        {"id": "s2", "lines": [line("s2-l1", []), line("s2-l2", [])]},
+    ]
+    _apply_edits(segments, [
+        {"line_id": "s1-l1", "action": "delete"},                                            # allowed
+        {"line_id": "s1-l2", "action": "rewrite", "display_text": "merged", "fact_ids": ["8.1-f2", "bogus"]},
+        {"line_id": "s1-l3", "action": "delete"},                                            # facts now on s1-l2
+        "junk",
+        {"line_id": "s2-l1", "action": "delete"}, {"line_id": "s2-l2", "action": "delete"},  # would empty s2
+    ], FACTS)
+    assert [(l["id"], l["display_text"], l["fact_ids"]) for l in segments[0]["lines"]] == [("s1-l2", "merged", ["8.1-f1", "8.1-f2"])]
+    assert [l["id"] for l in segments[1]["lines"]] == ["s2-l1", "s2-l2"]
+
+    segments = [{"id": "s1", "lines": [line("s1-l1", ["8.1-f1"]), line("s1-l2", [])]}]
+    _apply_edits(segments, [{"line_id": "s1-l1", "action": "delete"}], FACTS)  # only line teaching 8.1-f1
+    assert [l["id"] for l in segments[0]["lines"]] == ["s1-l1", "s1-l2"]

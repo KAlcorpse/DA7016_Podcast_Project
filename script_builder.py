@@ -1,8 +1,10 @@
 """Turns cleaned sections into a verified two-host script (script.json).
 
-Stages: extract facts -> plan segments -> write each segment -> verify against the
-source -> fix flagged lines. Anything still flagged after the fix rounds is kept in
-script["unresolved_issues"] so a teacher can review it before publishing.
+Stages: extract facts -> plan segments -> write each segment -> edit the whole episode
+for flow and length -> verify against the source -> fix flagged lines. Verify always
+runs last, so every line that reaches the audio has been checked. Anything still
+flagged after the fix rounds is kept in script["unresolved_issues"] so a teacher can
+review it before publishing.
 """
 import json
 import re
@@ -41,6 +43,10 @@ def ask_json(llm, system: str, user: str, key: str, temperature: float = 0.3, ma
         prompt = f'{user}\n\nYour previous reply was not a valid JSON object with a "{key}" list. Reply with the JSON object only.'
     stage = system.splitlines()[0]
     raise ScriptError(f"{stage}: the LLM did not return valid JSON after 3 attempts")
+
+
+def _word_count(segments) -> int:
+    return sum(len(line["display_text"].split()) for seg in segments for line in seg["lines"])
 
 
 def _source_text(section_ids, section_index) -> str:
@@ -126,6 +132,26 @@ def _apply_fixes(seg: dict, fixes: list) -> None:
         raise ScriptError(f"All lines in segment {seg['id']} were deleted during fixing")
 
 
+def _apply_edits(segments: list, edits: list, fact_index: dict) -> None:
+    """Applies the editor's rewrites and deletes through _apply_fixes, but skips any delete
+    that would drop a fact or empty a segment: tightening must never cut teaching content."""
+    edits = [e for e in edits if isinstance(e, dict)]
+    lines = {line["id"]: line for seg in segments for line in seg["lines"]}
+    for e in edits:  # a merged line takes over the facts of the line it absorbed
+        if e.get("action") != "delete" and e.get("line_id") in lines:
+            line = lines[e["line_id"]]
+            line["fact_ids"] += [f for f in e.get("fact_ids") or [] if f in fact_index and f not in line["fact_ids"]]
+    deleted = {e.get("line_id") for e in edits if e.get("action") == "delete"}
+    kept = {f for lid, line in lines.items() if lid not in deleted for f in line["fact_ids"]}
+    for seg in segments:
+        ids = {line["id"] for line in seg["lines"]}
+        mine = [e for e in edits if e.get("line_id") in ids
+                and (e.get("action") != "delete" or set(lines[e["line_id"]]["fact_ids"]) <= kept)]
+        if {e["line_id"] for e in mine if e.get("action") == "delete"} >= ids:
+            mine = [e for e in mine if e.get("action") != "delete"]
+        _apply_fixes(seg, mine)
+
+
 def _verify_and_fix(llm, seg: dict, source: str, log) -> list:
     issues = []
     for round_no in range(MAX_FIX_ROUNDS + 1):
@@ -179,9 +205,9 @@ def build_script(sections, llm, *, minutes, audience, language, host_a, host_b, 
     segments = _normalise_plan(plan, fact_index, section_order)
     goals = [seg["goal"] for seg in segments if seg["goal"]]
 
-    # 3 + 4. Write each segment, then verify and fix it against its own source text.
+    # 3. Write each segment.
     total_words = minutes * WORDS_PER_MINUTE
-    previous, unresolved = [], []
+    previous = []
     for i, seg in enumerate(segments):
         if len(segments) == 1:
             position = "only"
@@ -198,8 +224,19 @@ def build_script(sections, llm, *, minutes, audience, language, host_a, host_b, 
         )
         raw = ask_json(llm, s, u, "lines", temperature=0.7, max_tokens=6000)["lines"]
         seg["lines"] = _normalise_lines(raw, seg["id"], fact_index, host_b)
-        unresolved.extend(_verify_and_fix(llm, seg, source, log))
         previous = seg["lines"][-4:]
+
+    # 4. Edit the whole episode for flow and length (rewrite/delete only, facts kept).
+    before = _word_count(segments)
+    s, u = prompts.edit(facts=facts, segments=segments, current_words=before, target_words=total_words,
+                        audience=audience, host_a=host_a, host_b=host_b)
+    _apply_edits(segments, ask_json(llm, s, u, "edits", temperature=0.2, max_tokens=12000)["edits"], fact_index)
+    log(f"  Edited for flow and length: {before} -> {_word_count(segments)} words")
+
+    # 5. Verify and fix each segment against its own source text.
+    unresolved = []
+    for seg in segments:
+        unresolved.extend(_verify_and_fix(llm, seg, _source_text(seg["section_ids"], section_index), log))
 
     return {
         "title": title,

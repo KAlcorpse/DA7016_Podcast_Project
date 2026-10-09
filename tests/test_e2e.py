@@ -67,6 +67,15 @@ class FakeLLM:
                           "spoken_text": f"Here is {fid}. It is H two O.", "kind": "fact", "fact_ids": [fid]})
         return json.dumps({"lines": lines})
 
+    def edit(self, user):
+        return json.dumps({"edits": [
+            {"line_id": "s1-l1", "action": "delete"},                       # fact-free question: allowed
+            {"line_id": "s1-l2", "action": "delete"},                       # only line teaching 8.1-f1: refused
+            {"line_id": "s2-l2", "action": "rewrite", "display_text": "Both facts.", "spoken_text": "Both facts.",
+             "fact_ids": ["8.2-f2"]},                                       # merge s2-l3 into s2-l2
+            {"line_id": "s2-l3", "action": "delete"},
+        ]})
+
     def verify(self, user):
         flag = self.stubborn or len(self.stage_calls("verify")) == 1
         last = _ids(user.split("<lines>")[1])[-1]
@@ -94,6 +103,13 @@ def test_script_is_grounded_verified_and_fixed():
     # Extraction only ever sees the pasted section text.
     sections = prepare_sections(CHAPTER)
     assert [_between(u, "source").strip() for _, _, u in llm.stage_calls("extract")] == [s["text"] for s in sections]
+
+    # One whole-episode edit, and verify only after it, so edited lines are checked too.
+    stages = [c[0] for c in llm.calls]
+    assert stages.count("edit") == 1 and stages.index("edit") < stages.index("verify")
+    s1, s2 = (seg["lines"] for seg in script["segments"])
+    assert [line["id"] for line in s1] == ["s1-l2", "s1-l3"]
+    assert [(line["id"], line["fact_ids"]) for line in s2] == [("s2-l1", []), ("s2-l2", ["8.2-f1", "8.2-f2"])]
 
     # Verify ran on every segment (plus a re-check after the fix), with reasoning on.
     assert len(llm.stage_calls("verify")) == len(script["segments"]) + 1
@@ -137,4 +153,4 @@ def test_end_to_end_with_mock_tts(tmp_path):
         assert ends <= line["start"] < line["end"]
         ends = line["end"]
     assert manifest["duration"] >= ends
-    assert manifest["lines"][1]["speaker_name"] == "Arjun"
+    assert [l["speaker_name"] for l in manifest["lines"][:2]] == ["Arjun", "Meera"]
