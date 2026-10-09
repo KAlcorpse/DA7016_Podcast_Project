@@ -14,6 +14,8 @@ Short intro line.
 Inheritance from the previous generation provides a common basic body design. Repro-
 duction creates variation.
 128
+Chapter-8.indd 128
+03-Apr-26 8:04:39 PM
 HEREDITY AND EVOLUTION
 Reprint 2024-25
 Variations accumulate over generations.
@@ -30,7 +32,7 @@ Mendel crossed tall plants with short plants.
 def test_strips_headers_page_numbers_and_footers():
     sections = prepare_sections(CHAPTER)
     text = " ".join(s["text"] for s in sections)
-    for junk in ("HEREDITY AND EVOLUTION", "Reprint", "128", "Page 129"):
+    for junk in ("HEREDITY AND EVOLUTION", "Reprint", "128", "Page 129", ".indd", "PM"):
         assert junk not in text
     # The paragraph flows across the removed page break, and the hyphenated word is rejoined.
     assert "Reproduction creates variation. Variations accumulate over generations." in sections[0]["text"]

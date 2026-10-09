@@ -10,6 +10,8 @@ from collections import Counter
 HEADING = re.compile(r"^(\d{1,2}(?:\.\d{1,2}){1,2})\s+([A-Z][^\n]{2,90})$")
 PAGE_NUMBER = re.compile(r"^(page\s*)?\d{1,3}$", re.I)
 REPRINT_FOOTER = re.compile(r"^reprint\s+\d{4}\s*[-–]\s*\d{2,4}$", re.I)
+# Print-shop slugs in newer NCERT PDFs: "Chapter-10.indd 184" and "03-Apr-26 8:04:39 PM"
+PRINT_SLUG = re.compile(r"^(\S+\.indd\s+\d+|\d{1,2}-[a-z]{3}-\d{2,4}\s+\d{1,2}:\d{2}(:\d{2})?\s*([ap]m)?)$", re.I)
 
 MAX_SECTION_WORDS = 900      # longer sections are split so each LLM call stays small
 FALLBACK_SECTION_WORDS = 500  # used when the paste has no numbered headings
@@ -39,7 +41,7 @@ def _clean_lines(raw: str) -> list[str]:
     repeated = {line for line, n in counts.items() if n >= 3 and len(line) <= 60 and not HEADING.match(line)}
     kept = []
     for line in lines:
-        if line and (PAGE_NUMBER.match(line) or REPRINT_FOOTER.match(line) or line in repeated):
+        if line and (PAGE_NUMBER.match(line) or REPRINT_FOOTER.match(line) or PRINT_SLUG.match(line) or line in repeated):
             continue
         kept.append(line)
     return kept
