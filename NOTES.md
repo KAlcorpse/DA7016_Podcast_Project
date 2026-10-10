@@ -63,6 +63,12 @@ Class 9 Science, Chapter 10 *Sound*, sections 10.1–10.2.1 (1,430 words), `--mi
 | `out/sound8` | 794 | 16 of 29 | 3 | "Threads of Curiosity" box skipped; clipped sentences |
 | **`out/sound9`** | **989** | **12 of 28** | **2** | 37 of 40 facts quote-verified; 0 left for review; 1 line rescued with the chapter's words |
 
+Real-voice render of `out/sound9`:
+- **Length and cost:** 7:21, 57 clips, 5,375 characters.
+- **Loudness:** −16.7 LUFS.
+- **Turn gaps:** median 0.23 s (0.17–0.38 s).
+- **Duration check:** no clip needed a retake. Speaking rate ran 9.6–17.6 characters/s around a 12.8 median.
+
 Each problem row led to a prompt fix:
 - **sound6:** Meera's role was broadened.
 - **sound7:** misconceptions are now only genuine prior beliefs, voiced before the correcting idea.
