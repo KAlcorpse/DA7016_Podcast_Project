@@ -4,6 +4,8 @@ Paste a chapter, get a two-host podcast: `episode.mp3`, `episode.vtt` / `episode
 
 The model never uses its own memory of NCERT books. Every stage only sees the pasted text, and a verify pass checks each script line against that text before any audio is made.
 
+Pipeline: extract facts (each with a verbatim quote from the chapter) → plan segments (each with a why/how question and an optional misconception to refute) → write → edit the whole episode for flow and length → verify (free rule checks plus an LLM judge) → minimal fixes → fall back to the chapter's own words → make `spoken_text` digit-free for TTS → synthesise, trim, level, stitch, caption.
+
 ## Setup
 
 ```bash
@@ -42,12 +44,18 @@ Or all at once: `python run.py generate --input chapter.txt --out out/ch8 --minu
 | File | Job |
 |---|---|
 | `clean.py` | Strips page numbers, running headers, reprint footers; splits into sections |
-| `prompts.py` | All prompts (extract, plan, script, verify, fix) with shared grounding rules |
-| `script_builder.py` | Runs the LLM stages, validates JSON, fixes flagged lines |
-| `render.py` | Per-line TTS with caching, stitching, loudness normalisation, captions, manifest |
+| `prompts.py` | All prompts (extract, plan, script, edit, verify, fix, normalise) with shared grounding rules |
+| `script_builder.py` | Runs the LLM stages, validates JSON, rule checks, fixes and fallbacks |
+| `render.py` | Per-line TTS with caching, silence trim and levelling, duration QC with retakes, turn gaps, loudness, captions, manifest |
 | `providers.py` | LLM + Bodhan TTS clients, plus an offline mock TTS |
 | `run.py` | Command line |
 
 If lines are still flagged after two fix rounds, they are listed under `unresolved_issues` in `script.json` and `manifest.json` has `"needs_review": true`. Have a teacher look before publishing.
 
 Attribution: the Indic-Speak open-model license asks apps built on it to credit "Built with Indic-Speak from Bodhan AI / AI4Bharat". Worth adding to your player's footer.
+
+## Research basis
+
+`NCERT podcast generator research papers.md` reviews the literature behind these choices. Implemented: verbatim fact quotes (Attribute First), "report what the author says" framing (Zhou et al.), exact-match number checks and a link/phone filter, per-kind verification with refuted misconceptions (Muller et al., Driscoll et al.), minimal-edit fixes (RARR) with a quote fallback (Dialog Inpainting), reasoning only where judging, spoken-text normalisation (PolyNorm), a voice allow-list, clip levelling, natural turn gaps, duration QC with retakes, and two-line captions timed by spoken length.
+
+Not yet, each needs a decision: a local HHEM/MiniCheck checker (needs PyTorch), ASR listen-back with Bodhan Indic-Transcribe (needs its key), word-level forced alignment (PyTorch), prompt-prefix caching (LLM cost is already a few cents per episode), and quizzes / Ask the hosts (out of scope for now; `manifest.json` already carries `kind`, `fact_ids` and fact quotes for them).
