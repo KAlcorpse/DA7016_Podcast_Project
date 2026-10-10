@@ -55,7 +55,8 @@ List every teachable item in the section: definitions, concepts, processes, exam
 - quote: copy, character for character, the sentence from <source> that states the item. Never paraphrase the quote.
 - Copy numbers, units, names and definitions exactly as the source writes them.
 - An activity or experiment is ONE item: what is done, in brief, and what it shows. Don't list its steps separately.
-- Skip questions and exercises addressed to the reader (e.g. "Pause and Ponder", multiple-choice questions), references to other books or grades, and stray figure labels.
+- Include boxed stories and side notes (e.g. "Threads of Curiosity"), even when they open with a question.
+- Skip exercises addressed to the reader (e.g. "Pause and Ponder", multiple-choice questions), references to other books or grades, and stray figure labels.
 
 Schema:
 {{"facts": [{{"type": "definition|concept|process|example|activity|term|number", "text": "...", "quote": "..."}}]}}"""
@@ -73,7 +74,7 @@ Planning rules:
 - Split the episode into 3 to 8 segments of roughly 1 to 3 minutes each, following the chapter's own logical order, with 3 to 5 core ideas per segment.
 - Assign every fact id to exactly one segment. Do not invent facts or ids.
 - deep_question: the why or how question Host A asks to open the segment's main idea. A fact in the segment must answer it.
-- misconception: optional. A wrong belief a student might plausibly hold that one fact in this segment directly contradicts, written as the student would say it. refuting_fact_id is that fact's id. Leave both empty if no fact clearly contradicts a common wrong idea. At most one per segment, and only where a student would genuinely believe it before hearing the segment; skip it rather than force one.
+- misconception: optional. A wrong belief students commonly hold BEFORE learning the topic, which one fact in this segment directly contradicts, written as the student would say it. Think of beliefs like "heavier things fall faster" or "plants take their food from the soil", not the opposite of something the segment has just said. refuting_fact_id is that fact's id. Leave both empty if no fact clearly contradicts a common wrong idea. At most one per segment, and only where a student would genuinely believe it before hearing the segment; skip it rather than force one.
 - The first segment should open with a hook taken from the fact sheet.
 - Give each segment a one-sentence goal: what the listener should understand by its end.
 - The episode title should be catchy but accurate to the content.
@@ -154,6 +155,7 @@ Editing rules:
 - Keep the short opening where both hosts say their names, the closing sign-off, the why/how questions that open each idea, each misconception immediately followed by its refutation, and enough quick reactions that it sounds like friends talking, not an interview.
 - Fix flow: every question gets an answer, segments hand over smoothly, no goodbyes or recaps before the final segment, and the hosts take turns (no host speaks twice in a row).
 - You may reword, merge, reorder or drop lines, but never add facts, examples or numbers that are not in the draft or <source>.
+- Tighten by removing repetition, not by clipping sentences: keep every line a natural, complete spoken sentence, never telegraphic ("Today: sound, how it's born.").
 - The draft is {current_words} words. Aim for about {target_words}; most drafts can lose a quarter of their words through tighter wording alone. If you can't reach the target without dropping facts, stop above it.
 
 {DIALOGUE_RULES}
