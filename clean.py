@@ -13,6 +13,12 @@ REPRINT_FOOTER = re.compile(r"^reprint\s+\d{4}\s*[-–]\s*\d{2,4}$", re.I)
 # Print-shop slugs in newer NCERT PDFs: "Chapter-10.indd 184" and "03-Apr-26 8:04:39 PM"
 PRINT_SLUG = re.compile(r"^(\S+\.indd\s+\d+|\d{1,2}-[a-z]{3}-\d{2,4}\s+\d{1,2}:\d{2}(:\d{2})?\s*([ap]m)?)$", re.I)
 
+# Pasted text is untrusted: drop invisible characters that can hide instructions (ZWJ/ZWNJ
+# stay, Indic scripts need them) and any of our own prompt tags, so the text can't close
+# <source> early and pose as instructions.
+INVISIBLE = re.compile(r"[\u200b\u2060\ufeff\u202a-\u202e\u2066-\u2069]")
+PROMPT_TAGS = re.compile(r"</?\s*(source|facts|script|lines|flagged_lines|previous_lines|episode_goals)\s*>", re.I)
+
 MAX_SECTION_WORDS = 900      # longer sections are split so each LLM call stays small
 FALLBACK_SECTION_WORDS = 500  # used when the paste has no numbered headings
 
@@ -34,6 +40,7 @@ def split_sentences(text: str) -> list[str]:
 
 def _clean_lines(raw: str) -> list[str]:
     text = raw.replace("\r\n", "\n").replace("\r", "\n").replace("\u00ad", "").replace("\t", " ")
+    text = PROMPT_TAGS.sub(" ", INVISIBLE.sub("", text))
     text = re.sub(r"([a-z])-\n([a-z])", r"\1\2", text)  # re-join words hyphenated across lines
     lines = [re.sub(r"\s+", " ", line).strip() for line in text.split("\n")]
     # Short lines that repeat 3+ times are usually running headers/footers from the PDF.

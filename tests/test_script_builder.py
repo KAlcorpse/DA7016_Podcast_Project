@@ -1,6 +1,7 @@
 import pytest
 
-from script_builder import ScriptError, _apply_edit, _apply_fixes, _normalise_lines, _normalise_plan, parse_json
+from script_builder import (SPOKEN_PROBLEM, ScriptError, _apply_edit, _apply_fixes, _normalise_lines, _normalise_plan,
+                            _rule_issues, _tidy_spoken, parse_json)
 
 
 # --- parse_json ---------------------------------------------------------------
@@ -111,3 +112,27 @@ def test_normalise_lines_merges_one_host_talking_twice():
         {"id": "s1-l2", "speaker": "B", "display_text": "Sound is vibration. H₂O carries it.",
          "spoken_text": "Sound is vibration. H two O carries it.", "kind": "fact", "fact_ids": ["8.1-f1", "8.1-f2"]},
     ]
+
+
+# --- free rule checks -----------------------------------------------------------
+
+def test_rule_issues_catch_unsourced_numbers_and_contact_details():
+    source = "Sound travels at 330 m/s in air. See Fig. 10.3 and Activity 10.3a."
+    def line(lid, text, kind="fact"):
+        return {"id": lid, "display_text": text, "spoken_text": text, "kind": kind}
+    issues = _rule_issues([
+        line("l1", "It travels at 330 m/s, see Fig. 10.3."),        # all numbers in the chapter
+        line("l2", "Actually it's 343 m/s."),                         # memory leak
+        line("l3", "Not 33 or 3300, just 30."),                       # 33/3300 aren't substrings of 330 here
+        line("l4", "Maybe 1000 m/s?", "misconception"),               # deliberately wrong: skipped
+        line("l5", "Visit www.example.com or call 9876543210."),      # planted contact details
+    ], source)
+    assert [(i["line_id"], i["problem"]) for i in issues] == [("l2", "unsupported"), ("l3", "unsupported"), ("l5", "unsafe")]
+    assert issues[1]["note"].endswith("33, 3300, 30")
+
+
+def test_spoken_text_check_and_tidy():
+    assert not SPOKEN_PROBLEM.search("Activity ten point three shows sound travels through solids.")
+    for bad in ("Activity 10.3", "H₂O", "3:1 ratio", "x²", "costs ₹50", "an α particle", "(see figure)", "the the end"):
+        assert SPOKEN_PROBLEM.search(bad), bad
+    assert _tidy_spoken("Sound needs a medium — solid, liquid…  or gas") == "Sound needs a medium, solid, liquid. or gas"
