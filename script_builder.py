@@ -375,6 +375,12 @@ def build_script(sections, llm, *, minutes, audience, language, host_a, host_b, 
     # 6. Make spoken_text safe for the TTS voice.
     _normalise_spoken(llm, segments, language, log)
 
+    # Count-based pedagogy check, no judge needed: is Host A more than a question machine?
+    a_lines = [line for seg in segments for line in seg["lines"] if line["speaker"] == "A"]
+    kinds = [line["kind"] for seg in segments for line in seg["lines"]]
+    log(f"  Host A: {sum(l['kind'] == 'question' for l in a_lines)}/{len(a_lines)} lines are questions; "
+        f"{kinds.count('misconception')} misconception(s) voiced and refuted")
+
     return {
         "title": title,
         "language": language,

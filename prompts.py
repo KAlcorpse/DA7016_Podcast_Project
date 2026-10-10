@@ -33,6 +33,7 @@ fact_ids lists the fact ids the line relies on (empty for question and banter)."
 # Shared by the script writer and the editor, so both produce lines in the same style.
 DIALOGUE_RULES = """- It should sound like two friends talking, not a lecture read aloud. B explains; A is the listener's stand-in: asks, guesses, half-explains, and sums up in their own words, and B builds on it.
 - A opens each main idea with a why or how question BEFORE B explains it. Shallow "what's next?" prompts don't count.
+- Don't let it turn into question-and-answer ping-pong: at most half of A's lines are questions. A also guesses, connects an idea to an earlier one, or sums up in their own words, and B reacts to what A said ("Close!", "Exactly, and...") before adding to it.
 - Every factual statement must come from <facts> or <source>. Reactions, questions and feelings are free; new facts, examples, opinions stated as facts, or personal stories ("I once...") are not.
 - If an analogy helps, use at most one per segment, compare only one or two features, and have B say in a few words where the comparison stops working.
 - Keep lines short: mostly 1 to 3 sentences, rarely over 40 words. Break a long explanation into a back-and-forth instead of one long turn.
@@ -72,7 +73,7 @@ Planning rules:
 - Split the episode into 3 to 8 segments of roughly 1 to 3 minutes each, following the chapter's own logical order, with 3 to 5 core ideas per segment.
 - Assign every fact id to exactly one segment. Do not invent facts or ids.
 - deep_question: the why or how question Host A asks to open the segment's main idea. A fact in the segment must answer it.
-- misconception: optional. A wrong belief a student might plausibly hold that one fact in this segment directly contradicts, written as the student would say it. refuting_fact_id is that fact's id. Leave both empty if no fact clearly contradicts a common wrong idea. Use at most one per segment.
+- misconception: optional. A wrong belief a student might plausibly hold that one fact in this segment directly contradicts, written as the student would say it. refuting_fact_id is that fact's id. Leave both empty if no fact clearly contradicts a common wrong idea. At most one per segment; most segments should have one.
 - The first segment should open with a hook taken from the fact sheet.
 - Give each segment a one-sentence goal: what the listener should understand by its end.
 - The episode title should be catchy but accurate to the content.
