@@ -103,9 +103,10 @@ class BodhanTTS:
 
 
 class MockTTS:
-    """Offline stand-in that costs nothing: a short beep, then silence roughly as long
-    as the line would take to speak (150 words per minute). Host A beeps higher than
-    host B, so you can check caption sync by ear before spending real TTS credit."""
+    """Offline stand-in that costs nothing: a short beep, then a soft hum roughly as long
+    as the line would take to speak (150 words per minute). Host A is higher-pitched than
+    host B, so you can check caption sync by ear before spending real TTS credit. (A hum,
+    not silence, because the renderer trims silence off every clip.)"""
 
     def synthesize(self, text: str, voice: str, language: str) -> bytes:
         rate = 24000
@@ -114,7 +115,7 @@ class MockTTS:
         frames = bytearray()
         for i in range(int(seconds * rate)):
             t = i / rate
-            sample = 0.25 * math.sin(2 * math.pi * freq * t) if t < 0.15 else 0.0
+            sample = (0.25 if t < 0.15 else 0.03) * math.sin(2 * math.pi * freq * t)
             frames += struct.pack("<h", int(sample * 32767))
         buf = io.BytesIO()
         with wave.open(buf, "wb") as w:
@@ -129,12 +130,24 @@ def build_llm(settings) -> OpenAICompatibleLLM:
     return OpenAICompatibleLLM(settings.llm_base_url, settings.llm_api_key, settings.llm_model)
 
 
+# The 45 voices in the Bodhan API reference. Indic-Speak's model card warns that an unknown
+# voice name can silently give a degraded, averaged voice, so never send one.
+BODHAN_VOICES = {
+    "Prastuti", "Ankur", "Ishita", "Sourav", "Gwrbw", "Sansuma", "Preeti", "Sham", "Dhara", "Parth",
+    "Kavya", "Suhani", "Amit", "Deepika", "Adarsh", "Anjali", "Sandeep", "Zoon", "Ishfaq", "Vaidehi",
+    "Madhukar", "Lakshmi", "Kiran", "Thoibi", "Chaoba", "Anagha", "Chinmay", "Srijana", "Sagar", "Itishree",
+    "Akash", "Kaur", "Manpreet", "Bharati", "Aryaman", "Phulmani", "Sibu", "Moomal", "Rano", "Anitha",
+    "Arun", "Sravani", "Vamsi", "Saba", "Zaid",
+}
+
+
 def build_tts(settings, mock: bool = False):
     """Returns (tts_client, voices) where voices maps speaker 'A'/'B' to a voice id."""
     if mock:
         return MockTTS(), {"A": "mock-A", "B": "mock-B"}
-    if not (settings.voice_a and settings.voice_b):
-        raise ProviderError("Set BODHAN_VOICE_A and BODHAN_VOICE_B in .env (e.g. Kavya and Arun)")
+    for name in (settings.voice_a, settings.voice_b):
+        if name not in BODHAN_VOICES:
+            raise ProviderError(f"Unknown Bodhan voice {name!r} in .env; pick from: {', '.join(sorted(BODHAN_VOICES))}")
     if settings.voice_a == settings.voice_b:
         print("Warning: BODHAN_VOICE_A and BODHAN_VOICE_B are the same; the hosts will sound identical.")
     tts = BodhanTTS(settings.tts_base_url, settings.tts_api_key, settings.tts_model)

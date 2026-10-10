@@ -59,3 +59,15 @@ def test_post_waits_out_rate_limits(monkeypatch):
     monkeypatch.setattr(providers.requests, "post", lambda *a, **k: Resp(401))
     with pytest.raises(providers.ProviderError, match="401"):
         providers._post("u", "k", {})
+
+
+def test_build_tts_rejects_unknown_voices():
+    from dataclasses import replace
+
+    from config import Settings
+    settings = Settings(**dict.fromkeys(Settings.__dataclass_fields__, ""))
+    settings = replace(settings, tts_api_key="k", voice_a="Kavya", voice_b="Kavyaa")
+    with pytest.raises(providers.ProviderError, match="Kavyaa"):
+        providers.build_tts(settings)
+    _, voices = providers.build_tts(replace(settings, voice_b="Arun"))
+    assert voices == {"A": "Kavya", "B": "Arun"}
