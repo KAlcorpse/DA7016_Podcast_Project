@@ -73,7 +73,7 @@ Planning rules:
 - Split the episode into 3 to 8 segments of roughly 1 to 3 minutes each, following the chapter's own logical order, with 3 to 5 core ideas per segment.
 - Assign every fact id to exactly one segment. Do not invent facts or ids.
 - deep_question: the why or how question Host A asks to open the segment's main idea. A fact in the segment must answer it.
-- misconception: optional. A wrong belief a student might plausibly hold that one fact in this segment directly contradicts, written as the student would say it. refuting_fact_id is that fact's id. Leave both empty if no fact clearly contradicts a common wrong idea. At most one per segment; most segments should have one.
+- misconception: optional. A wrong belief a student might plausibly hold that one fact in this segment directly contradicts, written as the student would say it. refuting_fact_id is that fact's id. Leave both empty if no fact clearly contradicts a common wrong idea. At most one per segment, and only where a student would genuinely believe it before hearing the segment; skip it rather than force one.
 - The first segment should open with a hook taken from the fact sheet.
 - Give each segment a one-sentence goal: what the listener should understand by its end.
 - The episode title should be catchy but accurate to the content.
@@ -110,7 +110,7 @@ Hosts:
 Writing rules:
 {DIALOGUE_RULES}
 - Open the main idea with <deep_question> (reworded naturally is fine). Include at least one follow-up question from A that builds on B's previous answer.
-- If <misconception> is not "(none)", A voices it as a natural guess (kind "misconception"), and B's very next line says exactly what is wrong and gives the correct idea from fact <refuting_fact_id> (kind "refutation", with that fact id). Never voice a misconception without that refutation.
+- If <misconception> is not "(none)", A voices it as a natural guess BEFORE B has explained the idea that corrects it (kind "misconception"), and B's very next line says exactly what is wrong and gives the correct idea from fact <refuting_fact_id> (kind "refutation", with that fact id). Never voice a misconception without that refutation.
 - Aim for about {words} words in this segment, and cover every item in <facts>.
 - {_POSITION[position]}
 
