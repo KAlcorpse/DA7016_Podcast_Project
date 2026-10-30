@@ -5,7 +5,7 @@ to one common PCM format, trimmed, gain-matched and stitched with short pauses. 
 we place every clip ourselves, we know exactly when each line starts and ends, which
 gives caption timestamps without any extra alignment step.
 
-Audio choices follow the research review (docs/research_review.md):
+Audio choices follow our research review:
 turn gaps near 0.2 s (Levinson & Torreira 2015), each clip gain-matched before the
 master is normalised to -16 LUFS (Apple podcast spec), a duration check with retakes
 because LLM-based TTS can repeat or drop words (Neekhara et al. 2024), and captions sized

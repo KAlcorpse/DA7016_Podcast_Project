@@ -51,8 +51,6 @@ Or all at once: `python run.py generate --input chapter.txt --out out/ch8 --minu
 | `utils/config.py` | Reads settings from `.env` or the environment |
 | `utils/providers.py` | LLM + Bodhan TTS clients, plus an offline mock TTS |
 | `examples/sample_script.json` | Small script for the offline mock render |
-| `docs/NOTES.md` | What each research idea changed in the pipeline, with results on our test chapter |
-| `docs/research_review.md` | The literature review behind the design |
 | `tests/` | 42 tests, no network needed |
 
 If lines are still flagged after two fix rounds, they are listed under `unresolved_issues` in `script.json` and `manifest.json` has `"needs_review": true`. Have a teacher look before publishing.
@@ -61,6 +59,6 @@ Attribution: the Indic-Speak open-model license asks apps built on it to credit 
 
 ## Research basis
 
-`docs/research_review.md` reviews the literature behind these choices. Implemented: verbatim fact quotes (Attribute First), "report what the author says" framing (Zhou et al.), exact-match number checks and a link/phone filter, per-kind verification with refuted misconceptions (Muller et al., Driscoll et al.), minimal-edit fixes (RARR) with a quote fallback (Dialog Inpainting), reasoning only where judging, spoken-text normalisation (PolyNorm), a voice allow-list, clip levelling, natural turn gaps, duration QC with retakes, and two-line captions timed by spoken length.
+These choices come from a review of the literature. Implemented: verbatim fact quotes (Attribute First), "report what the author says" framing (Zhou et al.), exact-match number checks and a link/phone filter, per-kind verification with refuted misconceptions (Muller et al., Driscoll et al.), minimal-edit fixes (RARR) with a quote fallback (Dialog Inpainting), reasoning only where judging, spoken-text normalisation (PolyNorm), a voice allow-list, clip levelling, natural turn gaps, duration QC with retakes, and two-line captions timed by spoken length.
 
 Not yet, each needs a decision: a local HHEM/MiniCheck checker (needs PyTorch), ASR listen-back with Bodhan Indic-Transcribe (needs its key), word-level forced alignment (PyTorch), prompt-prefix caching (LLM cost is already a few cents per episode), and quizzes / Ask the hosts (out of scope for now; `manifest.json` already carries `kind`, `fact_ids` and fact quotes for them).

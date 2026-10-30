@@ -4,4 +4,4 @@ out/
 __pycache__/
 .venv/
 .pytest_cache/
-docs/ppt.md
+docs/
