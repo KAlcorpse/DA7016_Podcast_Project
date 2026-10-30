@@ -9,11 +9,11 @@ import json
 import sys
 from pathlib import Path
 
-from clean import prepare_sections
-from config import load_settings
-from providers import ProviderError, build_llm, build_tts
 from render import Renderer, RenderError
 from script_builder import ScriptError, build_script
+from utils.clean import prepare_sections
+from utils.config import load_settings
+from utils.providers import ProviderError, build_llm, build_tts
 
 
 def _read_sections(path: str) -> list:

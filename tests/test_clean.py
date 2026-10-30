@@ -1,4 +1,4 @@
-from clean import FALLBACK_SECTION_WORDS, MAX_SECTION_WORDS, prepare_sections, split_sentences
+from utils.clean import FALLBACK_SECTION_WORDS, MAX_SECTION_WORDS, prepare_sections, split_sentences
 
 
 def sentences(n: int, tag: str = "x") -> str:

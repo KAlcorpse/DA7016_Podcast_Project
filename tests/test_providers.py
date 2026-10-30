@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-import providers
+from utils import providers
 
 
 def test_bodhan_request_matches_api_reference(monkeypatch):
@@ -64,7 +64,7 @@ def test_post_waits_out_rate_limits(monkeypatch):
 def test_build_tts_rejects_unknown_voices():
     from dataclasses import replace
 
-    from config import Settings
+    from utils.config import Settings
     settings = Settings(**dict.fromkeys(Settings.__dataclass_fields__, ""))
     settings = replace(settings, tts_api_key="k", voice_a="Kavya", voice_b="Kavyaa")
     with pytest.raises(providers.ProviderError, match="Kavyaa"):

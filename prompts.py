@@ -4,7 +4,7 @@ Each system prompt starts with a STAGE line, which also makes logs easy to read.
 The grounding rules are shared by every stage: the model may only use what is inside
 <source>, never what it remembers about NCERT books.
 
-Design notes from the research review (NCERT podcast generator research papers.md):
+Design notes from the research review (docs/research_review.md):
 - "Report what the author says" framing plus a counterfactual example (Zhou et al. 2023,
   Xie et al. 2023): models slip back to memory where the chapter almost matches it.
 - Host A asks why/how questions before the content, and voices one misconception that

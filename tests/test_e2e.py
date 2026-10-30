@@ -6,10 +6,10 @@ import shutil
 import pytest
 
 import prompts
-from clean import prepare_sections
-from providers import MockTTS
 from render import Renderer
 from script_builder import MAX_FIX_ROUNDS, build_script
+from utils.clean import prepare_sections
+from utils.providers import MockTTS
 
 CHAPTER = """8.1 Accumulation of Variation During Reproduction
 Inheritance from the previous generation provides both a common basic body design, and subtle changes in it, for the next generation.

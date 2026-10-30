@@ -5,7 +5,7 @@ to one common PCM format, trimmed, gain-matched and stitched with short pauses. 
 we place every clip ourselves, we know exactly when each line starts and ends, which
 gives caption timestamps without any extra alignment step.
 
-Audio choices follow the research review (NCERT podcast generator research papers.md):
+Audio choices follow the research review (docs/research_review.md):
 turn gaps near 0.2 s (Levinson & Torreira 2015), each clip gain-matched before the
 master is normalised to -16 LUFS (Apple podcast spec), a duration check with retakes
 because LLM-based TTS can repeat or drop words (Neekhara et al. 2024), and captions sized
@@ -25,7 +25,7 @@ from array import array
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from clean import split_sentences
+from utils.clean import split_sentences
 
 SAMPLE_RATE = 24000
 GAP_WITHIN_LINE = 0.12     # seconds between TTS chunks of one line

@@ -1,6 +1,6 @@
 # Research-driven improvements
 
-What we added to the pipeline from the research review (`NCERT podcast generator research papers.md`), why, where it lives, and how it is tested. Everything below runs with no new dependencies. Test suite: `pytest` (42 tests, no network).
+What we added to the pipeline from the research review (`docs/research_review.md`), why, where it lives, and how it is tested. Everything below runs with no new dependencies. Test suite: `pytest` (42 tests, no network).
 
 ## 1. Grounding: every line must be traceable to the chapter
 
@@ -9,7 +9,7 @@ What we added to the pipeline from the research review (`NCERT podcast generator
 | **Verbatim quotes on facts.** Extraction returns, for each fact, the exact sentence it comes from. The quote is kept only if it really occurs in the section (compared after lower-casing and stripping punctuation), so any quote shown to a student is the chapter's own words. | Slobodkin et al., *Attribute First, then Generate* (ACL 2024): choosing evidence before writing gives precise, checkable citations. | `script_builder._extract`, `prompts.extract` |
 | **"Report what the author says" framing.** Grounding rule 1 now calls the source "the chapter author's account" and gives a counterfactual example (if the source said 400 m/s, say 400). | Zhou et al. (2023): opinion-style framing improves faithfulness. Xie et al. (2023): models slip back to memory when the source *almost* matches what they know, as with a revised NCERT edition. | `prompts.GROUNDING_RULES` |
 | **Exact-match number check.** A free check, run next to the LLM judge: every number in a line's caption must appear in the chapter with digit boundaries, so 343 doesn't pass because 3430 exists. | Same papers: near-matching numbers are the most common memory leak, and a deterministic check costs nothing. | `script_builder._rule_issues` |
-| **Untrusted-input defences.** Cleaning removes invisible characters (keeping the joiner characters that Indic scripts need) and any of our own prompt tags (`<source>` and others) from the paste. The rule check also rejects lines containing links, emails or phone numbers. | Hines et al., *Spotlighting*; Greshake et al.: pasted text can carry hidden instructions. A faithful pipeline would faithfully repeat a planted link, because it is "supported by the source". | `clean.INVISIBLE`, `clean.PROMPT_TAGS`, `script_builder.CONTACT` |
+| **Untrusted-input defences.** Cleaning removes invisible characters (keeping the joiner characters that Indic scripts need) and any of our own prompt tags (`<source>` and others) from the paste. The rule check also rejects lines containing links, emails or phone numbers. | Hines et al., *Spotlighting*; Greshake et al.: pasted text can carry hidden instructions. A faithful pipeline would faithfully repeat a planted link, because it is "supported by the source". | `utils.clean.INVISIBLE`, `utils.clean.PROMPT_TAGS`, `script_builder.CONTACT` |
 | **Pipeline order.** Whole-episode editing happens before verification, so every line that reaches the audio has been checked, including edited ones. | Huang et al. (ICLR 2024): no stage may approve its own output. | `script_builder.build_script` |
 
 ## 2. Verification and fixing
@@ -21,7 +21,7 @@ What we added to the pipeline from the research review (`NCERT podcast generator
 | **Minimal-edit fixes.** The fixer changes only the unsupported part and keeps speaker, tone and length. | Gao et al., *RARR*: revise while preserving the original. | `prompts.fix` |
 | **Fallback to the chapter's words.** A line still failing after two fix rounds is replaced by the verbatim quotes of its facts, which are grounded by construction. A failing line that teaches no fact is dropped. Only lines that can't be rescued go to `unresolved_issues`. Rescued ones are listed in `auto_resolved`. | *Dialog Inpainting*: the host gives a near-verbatim paraphrase of the source sentence. | `script_builder._fallback` |
 | **Merged turns keep the strictest kind.** When one host's two lines merge, the merged line keeps the kind that is checked hardest, so a fact can't hide inside an unchecked misconception. | Follows from per-kind verification. | `script_builder.KINDS` order |
-| **Reasoning only for judging.** OpenRouter reasoning is off for extraction, writing, fixing and normalising. It is on, at low effort, for editing and verifying. | Chen et al., *Do NOT Think That Much*; TALE. In our own test, DeepSeek at default effort spent 16k tokens on one verify call and returned nothing. Low effort caught both errors we planted, in about 3 s. | `providers.OpenAICompatibleLLM.complete` |
+| **Reasoning only for judging.** OpenRouter reasoning is off for extraction, writing, fixing and normalising. It is on, at low effort, for editing and verifying. | Chen et al., *Do NOT Think That Much*; TALE. In our own test, DeepSeek at default effort spent 16k tokens on one verify call and returned nothing. Low effort caught both errors we planted, in about 3 s. | `utils.providers.OpenAICompatibleLLM.complete` |
 
 ## 3. Teaching moves in the dialogue
 
@@ -39,7 +39,7 @@ What we added to the pipeline from the research review (`NCERT podcast generator
 | Change | Research basis | Where |
 |---|---|---|
 | **Digit-free spoken text.** Dashes and ellipses become pauses. Any line whose `spoken_text` still has digits, sub- or superscripts, maths or currency symbols, Greek letters, brackets, or a word repeated twice in a row goes through one normalisation call. That call has few-shot examples: ratios, formulae, genotypes ("double capital T"), units, rupees, Roman numerals, activity and figure numbers. | PolyNorm (few-shot LLM normalisation beat a production rule system). Neekhara et al.: LLM-based TTS repeats or skips words, especially on repeated tokens. | `script_builder.SPOKEN_PROBLEM`, `script_builder._normalise_spoken`, `prompts.normalise` |
-| **Voice allow-list.** Voice names are checked against the 45 voices in Bodhan's API reference before any call. | Indic-Speak model card: an unknown voice name can silently produce a degraded, averaged voice. | `providers.BODHAN_VOICES` |
+| **Voice allow-list.** Voice names are checked against the 45 voices in Bodhan's API reference before any call. | Indic-Speak model card: an unknown voice name can silently produce a degraded, averaged voice. | `utils.providers.BODHAN_VOICES` |
 
 ## 5. Audio stitching, QC and captions
 
