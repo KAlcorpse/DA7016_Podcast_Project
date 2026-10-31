@@ -1,4 +1,4 @@
-# NCERT chapter → podcast (Phase 1)
+# NCERT chapter → podcast 
 
 Paste a chapter, get a two-host podcast: `episode.mp3`, `episode.vtt` / `episode.srt` captions, and a `manifest.json` with per-line timestamps for the interactive player (Phase 2).
 
